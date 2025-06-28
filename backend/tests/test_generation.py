@@ -1,12 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
-from app.agent import (
-    ground_context,
-    generate_rationale,
-    generate_answer,
-    llm_annotate_with_citations,
-    agent_pipeline
-)
+from app.utils.llm import ground_context, llm_annotate_with_citations
+from app.agent import agent_pipeline
 
 
 class TestContextGrounding:
@@ -35,68 +30,6 @@ class TestContextGrounding:
         
         assert result == "Mocked LLM response"
         # Should still call LLM even with empty context
-        mock_llm.invoke.assert_called_once()
-
-
-class TestRationaleGeneration:
-    """Test rationale generation functionality"""
-    
-    def test_generate_rationale_success(self, mock_llm):
-        """Test successful rationale generation"""
-        grounded_context = "AI has both positive and negative impacts."
-        prompt = "What is the impact of AI on society?"
-        
-        result = generate_rationale(grounded_context, prompt, mock_llm)
-        
-        assert result == "Mocked LLM response"
-        mock_llm.invoke.assert_called_once()
-    
-    def test_generate_rationale_error_handling(self, mock_llm):
-        """Test error handling in rationale generation"""
-        mock_llm.invoke.side_effect = Exception("LLM error")
-        
-        with pytest.raises(Exception, match="LLM error"):
-            generate_rationale("test context", "test prompt", mock_llm)
-    
-    def test_generate_rationale_complex_prompt(self, mock_llm):
-        """Test rationale generation with complex prompts"""
-        grounded_context = "Autonomous vehicles raise questions about safety, liability, and job displacement."
-        prompt = "Analyze the ethical implications of autonomous vehicles in urban environments"
-        
-        result = generate_rationale(grounded_context, prompt, mock_llm)
-        
-        assert result == "Mocked LLM response"
-        # Should handle complex prompts without issues
-        mock_llm.invoke.assert_called_once()
-
-
-class TestAnswerGeneration:
-    """Test answer generation functionality"""
-    
-    def test_generate_answer_success(self, mock_llm):
-        """Test successful answer generation"""
-        grounded_context = "France is a country in Europe."
-        rationale = "Paris is the capital city of France."
-        prompt = "What is the capital of France?"
-        
-        result = generate_answer(grounded_context, rationale, prompt, mock_llm)
-        
-        assert result == "Mocked LLM response"
-        mock_llm.invoke.assert_called_once()
-    
-    def test_generate_answer_error_handling(self, mock_llm):
-        """Test error handling in answer generation"""
-        mock_llm.invoke.side_effect = Exception("LLM error")
-        
-        with pytest.raises(Exception, match="LLM error"):
-            generate_answer("test context", "test rationale", "test prompt", mock_llm)
-    
-    def test_generate_answer_without_rationale(self, mock_llm):
-        """Test answer generation without rationale"""
-        result = generate_answer("test context", "", "test prompt", mock_llm)
-        
-        assert result == "Mocked LLM response"
-        # Should still work without rationale
         mock_llm.invoke.assert_called_once()
 
 
@@ -180,7 +113,7 @@ class TestAsyncGeneration:
     @pytest.mark.asyncio
     async def test_agent_pipeline_basic_flow(self, mock_llm, mock_mem0_client):
         """Test basic agent pipeline flow"""
-        with patch('app.agent.mem0_client', mock_mem0_client), \
+        with patch('app.utils.memory.mem0_client', mock_mem0_client), \
              patch('app.agent.ChatOpenAI', return_value=mock_llm):
             
             user_id = "test_user"
@@ -203,7 +136,7 @@ class TestAsyncGeneration:
         """Test agent pipeline with memory retrieval"""
         mock_mem0_client.get_all.return_value = {'results': sample_memories}
         
-        with patch('app.agent.mem0_client', mock_mem0_client), \
+        with patch('app.utils.memory.mem0_client', mock_mem0_client), \
              patch('app.agent.ChatOpenAI', return_value=mock_llm):
             
             user_id = "test_user"
@@ -223,7 +156,7 @@ class TestAsyncGeneration:
         """Test agent pipeline error handling"""
         mock_llm.astream.side_effect = Exception("LLM error")
         
-        with patch('app.agent.mem0_client', mock_mem0_client), \
+        with patch('app.utils.memory.mem0_client', mock_mem0_client), \
              patch('app.agent.ChatOpenAI', return_value=mock_llm):
             
             user_id = "test_user"

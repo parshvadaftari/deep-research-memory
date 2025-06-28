@@ -17,19 +17,12 @@ with patch('mem0.Memory') as mock_memory:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
     from main import app
-    from app.agent import (
-        fetch_conversation_history,
-        format_context,
-        ground_context,
-        generate_rationale,
-        generate_answer,
-        fetch_cited_memories,
-        write_memory,
-        store_conversation,
-        llm_annotate_with_citations,
-        bm25_hybrid_search,
-        agent_pipeline
-    )
+    from app.utils.database import fetch_conversation_history, store_conversation
+    from app.utils.memory import write_memory, fetch_cited_memories
+    from app.utils.search import bm25_hybrid_search
+    from app.utils.llm import ground_context, llm_annotate_with_citations
+    from app.utils.context import format_context
+    from app.agent import agent_pipeline
     from app.services.agent_service import AgentService
     from app.core.config import Settings
 

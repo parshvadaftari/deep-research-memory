@@ -3,13 +3,10 @@ import sqlite3
 import tempfile
 import os
 from unittest.mock import Mock, patch, MagicMock
-from app.agent import (
-    fetch_conversation_history,
-    bm25_hybrid_search,
-    fetch_cited_memories,
-    format_context,
-    write_memory
-)
+from app.utils.database import fetch_conversation_history
+from app.utils.search import bm25_hybrid_search
+from app.utils.memory import fetch_cited_memories, write_memory
+from app.utils.context import format_context
 
 
 class TestConversationHistoryRetrieval:
@@ -17,7 +14,7 @@ class TestConversationHistoryRetrieval:
     
     def test_fetch_conversation_history_empty(self, temp_db):
         """Test fetching conversation history when no conversations exist"""
-        with patch('app.agent.sqlite3.connect') as mock_connect:
+        with patch('app.utils.database.sqlite3.connect') as mock_connect:
             mock_conn = Mock()
             mock_cursor = Mock()
             mock_connect.return_value = mock_conn
@@ -49,7 +46,7 @@ class TestConversationHistoryRetrieval:
             ('agent', 'I am fine, thank you!', '1641081600.0')
         ]
         
-        with patch('app.agent.sqlite3.connect') as mock_connect:
+        with patch('app.utils.database.sqlite3.connect') as mock_connect:
             mock_conn = Mock()
             mock_cursor = Mock()
             mock_connect.return_value = mock_conn
@@ -69,7 +66,7 @@ class TestConversationHistoryRetrieval:
             for i in range(15)
         ]
         
-        with patch('app.agent.sqlite3.connect') as mock_connect:
+        with patch('app.utils.database.sqlite3.connect') as mock_connect:
             mock_conn = Mock()
             mock_cursor = Mock()
             mock_connect.return_value = mock_conn
@@ -162,7 +159,7 @@ class TestMemoryRetrieval:
     
     def test_fetch_cited_memories_success(self, mock_mem0_client):
         """Test successful fetching of cited memories"""
-        with patch('app.agent.mem0_client', mock_mem0_client):
+        with patch('app.utils.memory.mem0_client', mock_mem0_client):
             citations = [('mem_001', '2024-01-01T10:00:00Z'), ('mem_002', '2024-01-02T10:00:00Z')]
             
             result = fetch_cited_memories(citations)
@@ -174,7 +171,7 @@ class TestMemoryRetrieval:
     
     def test_fetch_cited_memories_duplicate_handling(self, mock_mem0_client):
         """Test that duplicate memory IDs are handled correctly"""
-        with patch('app.agent.mem0_client', mock_mem0_client):
+        with patch('app.utils.memory.mem0_client', mock_mem0_client):
             citations = [('mem_001', '2024-01-01T10:00:00Z'), ('mem_001', '2024-01-01T10:00:00Z')]
             
             result = fetch_cited_memories(citations)
@@ -186,7 +183,7 @@ class TestMemoryRetrieval:
         """Test handling of memories that are not found"""
         mock_mem0_client.get.return_value = None
         
-        with patch('app.agent.mem0_client', mock_mem0_client):
+        with patch('app.utils.memory.mem0_client', mock_mem0_client):
             citations = [('mem_001', '2024-01-01T10:00:00Z')]
             
             result = fetch_cited_memories(citations)
@@ -199,13 +196,13 @@ class TestMemoryRetrieval:
         """Test error handling when fetching memories fails"""
         mock_mem0_client.get.side_effect = Exception("Database error")
         
-        with patch('app.agent.mem0_client', mock_mem0_client):
+        with patch('app.utils.memory.mem0_client', mock_mem0_client):
             citations = [('mem_001', '2024-01-01T10:00:00Z')]
             
             result = fetch_cited_memories(citations)
             
             assert len(result) == 1
-            assert '[Error fetching memory' in result[0]['content']
+            assert result[0]['title'] == '[Error fetching memory]'
             assert 'Database error' in result[0]['content']
 
 
@@ -261,17 +258,17 @@ class TestMemoryWriting:
     
     def test_write_memory_success(self, mock_mem0_client):
         """Test successful memory writing"""
-        with patch('app.agent.mem0_client', mock_mem0_client):
-            result = write_memory("Test prompt", "test_user")
+        with patch('app.utils.memory.mem0_client', mock_mem0_client):
+            result = write_memory("Test memory content", "test_user")
             
             assert result == {'id': 'test_memory_id'}
             mock_mem0_client.add.assert_called_once()
     
     def test_write_memory_error_handling(self, mock_mem0_client):
         """Test error handling in memory writing"""
-        mock_mem0_client.add.side_effect = Exception("Memory write failed")
+        mock_mem0_client.add.side_effect = Exception("Memory write error")
         
-        with patch('app.agent.mem0_client', mock_mem0_client):
-            result = write_memory("Test prompt", "test_user")
+        with patch('app.utils.memory.mem0_client', mock_mem0_client):
+            result = write_memory("Test memory content", "test_user")
             
             assert result is None
