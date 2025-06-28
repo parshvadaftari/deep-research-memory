@@ -65,7 +65,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 cd frontend
 
 # Install dependencies
-npm install ----legacy-peer-deps
+npm install --legacy-peer-deps
 
 # Start development server
 npm run dev
