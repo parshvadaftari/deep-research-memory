@@ -199,5 +199,5 @@ class TestPromptTemplates:
         
         assert "Test context" in formatted
         assert "Test prompt" in formatted
-        assert "{context}" not in formatted  # Should be replaced
-        assert "{prompt}" not in formatted   # Should be replaced 
+        assert "{context}" not in formatted
+        assert "{prompt}" not in formatted
