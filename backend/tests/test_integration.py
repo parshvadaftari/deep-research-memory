@@ -11,8 +11,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
-from app.services.agent_service import AgentService
-from app.agent import agent_pipeline
+from app.simple_agent.agent_service import AgentService
+from app.simple_agent.agent import agent_pipeline
 
 
 class TestServiceLayerIntegration:
@@ -22,7 +22,7 @@ class TestServiceLayerIntegration:
     async def test_agent_service_search_success(self, mock_llm, mock_mem0_client):
         """Test successful search through AgentService"""
         with patch('app.utils.memory.mem0_client', mock_mem0_client), \
-             patch('app.agent.ChatOpenAI', return_value=mock_llm):
+             patch('app.simple_agent.agent.ChatOpenAI', return_value=mock_llm):
             
             service = AgentService()
             user_id = "test_user"
@@ -46,7 +46,7 @@ class TestServiceLayerIntegration:
         mock_llm.astream.side_effect = Exception("Service error")
         
         with patch('app.utils.memory.mem0_client', mock_mem0_client), \
-             patch('app.agent.ChatOpenAI', return_value=mock_llm):
+             patch('app.simple_agent.agent.ChatOpenAI', return_value=mock_llm):
             
             service = AgentService()
             user_id = "test_user"
@@ -69,7 +69,7 @@ class TestEndToEndWorkflow:
     async def test_complete_search_workflow(self, mock_llm, mock_mem0_client):
         """Test complete search workflow from API to agent"""
         with patch('app.utils.memory.mem0_client', mock_mem0_client), \
-             patch('app.agent.ChatOpenAI', return_value=mock_llm):
+             patch('app.simple_agent.agent.ChatOpenAI', return_value=mock_llm):
             
             # Test agent pipeline directly
             user_id = "test_user"
@@ -88,7 +88,7 @@ class TestEndToEndWorkflow:
         mock_mem0_client.get_all.return_value = {'results': sample_memories}
         
         with patch('app.utils.memory.mem0_client', mock_mem0_client), \
-             patch('app.agent.ChatOpenAI', return_value=mock_llm):
+             patch('app.simple_agent.agent.ChatOpenAI', return_value=mock_llm):
             
             user_id = "test_user"
             prompt = "Explain neural networks"
@@ -111,7 +111,7 @@ class TestAgentPipeline:
     async def test_agent_pipeline_success(self, mock_llm, mock_mem0_client, sample_memories, sample_conversation_history):
         """Test successful execution of the complete agent pipeline"""
         with patch('app.utils.memory.mem0_client', mock_mem0_client), \
-             patch('app.agent.ChatOpenAI', return_value=mock_llm):
+             patch('app.simple_agent.agent.ChatOpenAI', return_value=mock_llm):
             
             prompt = "What is machine learning?"
             user_id = "test_user"
@@ -134,7 +134,7 @@ class TestAgentPipeline:
         mock_mem0_client.get_all.return_value = {'results': sample_memories}
         
         with patch('app.utils.memory.mem0_client', mock_mem0_client), \
-             patch('app.agent.ChatOpenAI', return_value=mock_llm):
+             patch('app.simple_agent.agent.ChatOpenAI', return_value=mock_llm):
             
             prompt = "Explain neural networks"
             user_id = "test_user"
@@ -153,7 +153,7 @@ class TestAgentPipeline:
         mock_llm.astream.side_effect = Exception("LLM error")
         
         with patch('app.utils.memory.mem0_client', mock_mem0_client), \
-             patch('app.agent.ChatOpenAI', return_value=mock_llm):
+             patch('app.simple_agent.agent.ChatOpenAI', return_value=mock_llm):
             
             prompt = "Test prompt"
             user_id = "test_user"
@@ -173,7 +173,7 @@ class TestAgentPipeline:
     async def test_agent_pipeline_memory_write(self, mock_llm, mock_mem0_client):
         """Test that agent pipeline writes to memory"""
         with patch('app.utils.memory.mem0_client', mock_mem0_client), \
-             patch('app.agent.ChatOpenAI', return_value=mock_llm):
+             patch('app.simple_agent.agent.ChatOpenAI', return_value=mock_llm):
             
             prompt = "What is AI?"
             user_id = "test_user"

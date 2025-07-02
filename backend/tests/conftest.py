@@ -22,8 +22,8 @@ with patch('mem0.Memory') as mock_memory:
     from app.utils.search import bm25_hybrid_search
     from app.utils.llm import ground_context, llm_annotate_with_citations
     from app.utils.context import format_context
-    from app.agent import agent_pipeline
-    from app.services.agent_service import AgentService
+    from app.simple_agent.agent import agent_pipeline
+    from app.simple_agent.agent_service import AgentService
     from app.core.config import Settings
 
 
