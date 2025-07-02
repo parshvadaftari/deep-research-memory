@@ -21,6 +21,15 @@ An AI-powered research assistant that retrieves context from long-term memory (M
 - **UI Components**: Radix UI + Tailwind CSS
 - **Real-time**: WebSocket for streaming responses
 
+## Modular Backend Structure
+
+The backend is organized into modular subfolders for each agent type:
+
+- `simple_agent/` – Simple research agent logic and endpoints
+- `sequential_agent/` – LangGraph sequential agent logic and endpoints
+- `multiagent/` – LangGraph multiagent logic and endpoints
+
+
 ### Why GPT-4.1-mini?
 
 We chose GPT-4.1-mini for its optimal balance of performance, cost, and speed:
@@ -101,7 +110,6 @@ python main.py
 ## Testing
 
 The project includes a comprehensive test suite covering both **retrieval** and **generation** components of the deep research memory system.
-
 
 ### Prerequisites
 

@@ -34,6 +34,9 @@ interface ResearchMessage {
   isComplete?: boolean
   rationaleStreaming?: boolean
   answerStreaming?: boolean
+  clarification?: string
+  supervisorPlan?: string
+  subagentTasks?: string[]
 }
 
 export default function MemoryResearchChatbot() {
@@ -128,7 +131,7 @@ export default function MemoryResearchChatbot() {
     // Open or reuse WebSocket
     let ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      ws = new window.WebSocket('ws://localhost:8000/ws');
+      ws = new window.WebSocket('ws://localhost:8000/api/v1/multiagent/ws/multiagent');
       wsRef.current = ws;
     }
 
@@ -143,50 +146,105 @@ export default function MemoryResearchChatbot() {
       } catch {
         return;
       }
-      setMessages((prev) => prev.map((m) => {
-        if (m.id !== messageId) return m;
-        let updated = { ...m };
-        switch (payload.type) {
-          case 'thinking':
-            setIsThinking(true);
-            updated.isThinking = true;
-            break;
-          case 'rationale_token':
-            rationale += payload.token;
-            updated.rationaleHtml = rationale;
-            updated.rationaleStreaming = true;
-            break;
-          case 'rationale_complete':
-            updated.rationaleHtml = payload.rationale;
-            updated.rationaleStreaming = false;
-            break;
-          case 'rationale_annotated_html':
-            updated.rationaleHtml = payload.rationale_html;
-            updated.rationaleStreaming = false;
-            break;
-          case 'answer_token':
-            answer += payload.token;
-            updated.answerHtml = answer;
-            updated.answerStreaming = true;
-            break;
-          case 'answer_complete':
-            updated.answerHtml = payload.answer;
-            updated.answerStreaming = false;
-            break;
-          case 'answer_annotated_html':
-            updated.answerHtml = payload.answer_html;
-            updated.answerStreaming = false;
-            break;
-          case 'citations':
-            updated.citations = payload.citations;
-            break;
-          case 'done':
-            updated.isThinking = false;
-            setIsThinking(false);
-            break;
+      console.log('WebSocket payload:', payload);
+      setMessages((prev) => {
+        let found = false;
+        const newMessages = prev.map((m) => {
+          if (m.id !== messageId) return m;
+          found = true;
+          let updated = { ...m };
+          switch (payload.type) {
+            case 'thinking':
+              setIsThinking(true);
+              updated.isThinking = true;
+              break;
+            case 'rationale_token':
+              rationale += payload.token;
+              updated.rationaleHtml = rationale;
+              updated.rationaleStreaming = true;
+              break;
+            case 'rationale_complete':
+              updated.rationaleHtml = payload.rationale;
+              updated.rationaleStreaming = false;
+              break;
+            case 'rationale_annotated_html':
+              updated.rationaleHtml = payload.rationale_html;
+              updated.rationaleStreaming = false;
+              break;
+            case 'answer_token':
+              answer += payload.token;
+              updated.answerHtml = answer;
+              updated.answerStreaming = true;
+              break;
+            case 'answer_complete':
+              updated.answerHtml = payload.answer;
+              updated.answerStreaming = false;
+              break;
+            case 'answer_annotated_html':
+              updated.answerHtml = payload.answer_html;
+              updated.answerStreaming = false;
+              break;
+            case 'citations':
+              updated.citations = payload.citations;
+              break;
+            case 'done':
+              updated.isThinking = false;
+              setIsThinking(false);
+              break;
+            case 'clarification': {
+              const clarificationText = Array.isArray(payload.clarifications)
+                ? payload.clarifications.join('\n\n')
+                : String(payload.clarifications);
+              updated.clarification = clarificationText;
+              updated.content = clarificationText;
+              updated.isThinking = false;
+              updated.isComplete = true;
+              break;
+            }
+            case 'rationale':
+              updated.rationaleHtml = payload.rationale;
+              updated.rationaleStreaming = false;
+              break;
+            case 'answer':
+              updated.answerHtml = payload.answer;
+              updated.answerStreaming = false;
+              break;
+            case 'supervisor_plan':
+              updated.supervisorPlan = payload.supervisor_plan;
+              break;
+            case 'subagent_tasks':
+              updated.subagentTasks = payload.subagent_tasks;
+              break;
+          }
+          return updated;
+        });
+        // If not found, add a new assistant message
+        if (!found && payload.type !== 'thinking') {
+          let newMsg: ResearchMessage = {
+            id: messageId,
+            role: 'assistant',
+            content: '',
+            isThinking: false,
+            isComplete: true,
+            clarification: '',
+            rationaleHtml: '',
+            answerHtml: '',
+            citations: [],
+            rationaleStreaming: false,
+            answerStreaming: false,
+          };
+          if (payload.type === 'clarification') {
+            const clarificationText = Array.isArray(payload.clarifications)
+              ? payload.clarifications.join('\n\n')
+              : String(payload.clarifications);
+            newMsg.clarification = clarificationText;
+            newMsg.content = clarificationText;
+          }
+          // Add other payload types as needed
+          newMessages.push(newMsg);
         }
-        return updated;
-      }));
+        return newMessages;
+      });
     };
 
     ws.onerror = (err) => {
@@ -282,7 +340,6 @@ export default function MemoryResearchChatbot() {
     const rationaleRef = useRef<HTMLDivElement>(null);
     const answerRef = useRef<HTMLDivElement>(null);
 
-    // Helper to render HTML with interactive citations using html-react-parser
     function renderHtmlWithCitations(html: string, citations: Citation[]) {
       const options: HTMLReactParserOptions = {
         replace(domNode) {
@@ -324,69 +381,101 @@ export default function MemoryResearchChatbot() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {/* Thinking Process (Rationale) */}
-            {(message.rationaleHtml && message.rationaleHtml.trim()) ? (
-              <Accordion type="single" collapsible defaultValue="thinking">
-                <AccordionItem value="thinking">
+            {/* Thinking (Supervisor Plan/Subtasks) Section */}
+            {message.supervisorPlan && (
+              <Accordion type="single" collapsible defaultValue="supervisor-plan">
+                <AccordionItem value="supervisor-plan">
                   <AccordionTrigger>
                     <CardHeader>
-                      <CardTitle>Thinking Process</CardTitle>
+                      <CardTitle>Thinking (Supervisor Plan)</CardTitle>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent>
+                      <div className="prose prose-invert max-w-none">
+                        <ReactMarkdown>{message.supervisorPlan}</ReactMarkdown>
+                      </div>
+                    </CardContent>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
+            {/* Subtasks Section */}
+            {message.subagentTasks && message.subagentTasks.length > 0 && (
+              <Accordion type="single" collapsible defaultValue="subtasks">
+                <AccordionItem value="subtasks">
+                  <AccordionTrigger>
+                    <CardHeader>
+                      <CardTitle>Subtasks</CardTitle>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent>
+                      <ul className="list-disc pl-6">
+                        {message.subagentTasks.map((task, idx) => (
+                          <li key={idx}>{task}</li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
+            {/* Clarifications Section */}
+            {message.clarification && message.clarification.trim() && (
+              <Accordion type="single" collapsible defaultValue="clarification">
+                <AccordionItem value="clarification">
+                  <AccordionTrigger>
+                    <CardHeader>
+                      <CardTitle>Clarifications</CardTitle>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent>
+                      <div className="prose prose-invert max-w-none">
+                        <ReactMarkdown>{message.clarification}</ReactMarkdown>
+                      </div>
+                    </CardContent>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
+            {/* Reasoning (Rationale) Section */}
+            {message.rationaleHtml && message.rationaleHtml.trim() && (
+              <Accordion type="single" collapsible defaultValue="reasoning">
+                <AccordionItem value="reasoning">
+                  <AccordionTrigger>
+                    <CardHeader>
+                      <CardTitle>Reasoning</CardTitle>
                     </CardHeader>
                   </AccordionTrigger>
                   <AccordionContent>
                     <CardContent>
                       <div ref={rationaleRef} className="prose prose-invert max-w-none">
                         {message.rationaleStreaming
-                          ? message.rationaleHtml // Show plain text while streaming
-                          : renderHtmlWithCitations(message.rationaleHtml, message.citations || []) // Show annotated HTML after streaming
-                        }
+                          ? message.rationaleHtml
+                          : renderHtmlWithCitations(message.rationaleHtml, message.citations || [])}
                       </div>
                     </CardContent>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            ) : message.thinking ? (
-              <Accordion type="single" collapsible defaultValue="thinking">
-                <AccordionItem value="thinking">
-                  <AccordionTrigger>
-                    <CardHeader>
-                      <CardTitle>Thinking Process</CardTitle>
-                    </CardHeader>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <CardContent>
-                      <ReactMarkdown>{message.thinking}</ReactMarkdown>
-                    </CardContent>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            ) : null}
-
-            {/* Final Answer */}
-            {(message.answerHtml && message.answerHtml.trim()) ? (
+            )}
+            {/* Final Answer with Citations Section */}
+            {message.answerHtml && message.answerHtml.trim() && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Research Summary</CardTitle>
+                  <CardTitle>Final Answer (with Citations)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div ref={answerRef} className="prose prose-invert max-w-none">
                     {message.answerStreaming
-                      ? message.answerHtml // Show plain text while streaming
-                      : renderHtmlWithCitations(message.answerHtml, message.citations || []) // Show annotated HTML after streaming
-                    }
+                      ? message.answerHtml
+                      : renderHtmlWithCitations(message.answerHtml, message.citations || [])}
                   </div>
                 </CardContent>
               </Card>
-            ) : message.content ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Research Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                </CardContent>
-              </Card>
-            ) : null}
+            )}
           </div>
         )}
       </div>
