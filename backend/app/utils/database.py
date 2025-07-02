@@ -1,7 +1,3 @@
-"""
-Database utilities for conversation history management.
-"""
-
 import time
 import sqlite3
 import logging

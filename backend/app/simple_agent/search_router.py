@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import StreamingResponse
 from app.models import SearchRequest
-from app.services.agent_service import AgentService
+from app.simple_agent.agent_service import AgentService
 import json
 import logging
 

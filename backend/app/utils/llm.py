@@ -1,8 +1,6 @@
-"""
-LLM utilities for interaction and annotation.
-"""
-
 from ..prompts import GROUND_CONTEXT_PROMPT
+from langchain_openai import ChatOpenAI
+from typing import List, Dict
 
 def ground_context(context: str, prompt: str, llm):
     """
@@ -44,11 +42,38 @@ IMPORTANT: Do NOT use Ellipsis, [N], [1], [2], etc. citation markers anywhere in
 
 For every phrase or sentence in the text that is directly supported by a memory, wrap it in a <cite data-citation="N">...</cite> tag, where N is the number of the memory in the list below. Do this for every citation that applies. Do not add, remove, or change any text. Only add <cite> tags. Return valid HTML only.
 
-# Memory Citations
 {citation_list}
 
-# Text to Annotate
 {text}
 '''
     annotated = llm.invoke([{"role": "user", "content": annotation_prompt}])
     return annotated.content if hasattr(annotated, "content") else annotated 
+
+def get_llm(model: str = "gpt-4.1-mini"):
+    # Returns a streaming LLM instance (can be customized/configured)
+    return ChatOpenAI(model=model, streaming=True)
+
+def cot_reasoning_prompt(context: str, prompt: str) -> str:
+    # Chain-of-thought prompt for rationale generation
+    return (
+        "You are an expert research assistant.\n"
+        "Given the following context from the user's memories and past conversations, reason step by step to answer the user's question.\n"
+        "If you need more information, specify what to retrieve next.\n"
+        "\nContext:\n" + context + "\n\nQuestion: " + prompt + "\n\nLet's think step by step."
+    )
+
+def answer_prompt(context: str, rationale: str, prompt: str) -> str:
+    # Prompt for answer generation, grounded in rationale and context
+    return (
+        "You are an expert research assistant.\n"
+        "Given the following context and rationale, synthesize a clear, well-structured answer to the user's question.\n"
+        "\nContext:\n" + context + "\n\nRationale:\n" + rationale + "\n\nQuestion: " + prompt + "\n\nAnswer:"
+    )
+
+def annotate_with_citations(answer: str, cited_memories: List[Dict]) -> str:
+    # Simple inline citation annotation (can be improved for production)
+    for i, mem in enumerate(cited_memories):
+        ref = f"[ref: {mem['id']}]"
+        if mem['title'][:20] in answer:
+            answer = answer.replace(mem['title'][:20], mem['title'][:20] + " " + ref)
+    return answer 

@@ -1,17 +1,12 @@
-"""
-Search utilities for hybrid search functionality.
-"""
-
 import nltk
 from rank_bm25 import BM25Okapi
 
-# Download required NLTK data
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
     nltk.download('punkt')
 
-def bm25_hybrid_search(prompt: str, memories: list, conversation_history: list, top_n: int = 5):
+def bm25_hybrid_search(prompt: str, memories: list, conversation_history: list, top_n: int = 10):
     """
     Perform BM25 hybrid search across memories and conversation history.
     

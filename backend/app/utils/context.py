@@ -1,7 +1,3 @@
-"""
-Context utilities for formatting and organizing context information.
-"""
-
 def format_context(memories: list, conversation_history: list):
     """
     Format memories and conversation history into a structured context string.

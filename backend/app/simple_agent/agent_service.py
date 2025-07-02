@@ -1,4 +1,4 @@
-from app.agent import agent_pipeline
+from app.simple_agent.agent import agent_pipeline
 import logging
 
 logger = logging.getLogger(__name__)

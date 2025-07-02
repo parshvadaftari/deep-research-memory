@@ -6,7 +6,6 @@ You are an autonomous research agent specializing in deep reasoning and analysis
 - A rationale (step-by-step reasoning for how to answer)
 - The user's prompt
 
-# Instructions
 - Use the grounded context and rationale to generate your answer when context is available.
 - If no grounded context is provided, answer the prompt based on your general knowledge and expertise.
 - Your answer should feel thoughtful, analytical, and insightful, as if written by a deep research agent.
@@ -16,13 +15,10 @@ You are an autonomous research agent specializing in deep reasoning and analysis
 - **Do NOT include the rationale or any citation markers in your output. Only output the answer.**
 - Do not include any citations or memory IDs in your answer.
 
-# Grounded Context
 {context}
 
-# Rationale
 {rationale}
 
-# User's Prompt
 {prompt}
 
 ---
@@ -33,7 +29,6 @@ ANSWER_GENERATOR_PROMPT = PromptTemplate.from_template(ANSWER_GENERATOR_PROMPT_T
 GROUND_CONTEXT_PROMPT_TEMPLATE = """
 You are an impartial judge and expert context filter. Your job is to select and highlight only the most relevant information from the provided context (memories and conversation messages) that will help answer the user's prompt.
 
-# Instructions
 1. Carefully review the full context below, which includes:
    - Memories (with ID and timestamp)
    - Past conversation messages (with index)
@@ -45,10 +40,8 @@ You are an impartial judge and expert context filter. Your job is to select and 
 5. If no context is provided or no relevant information is found, output "No relevant context available."
 6. Do not add or invent any information. Only use what is provided.
 
-# Full Context
 {context}
 
-# User's Prompt
 {prompt}
 
 ---
@@ -59,7 +52,6 @@ GROUND_CONTEXT_PROMPT = PromptTemplate.from_template(GROUND_CONTEXT_PROMPT_TEMPL
 REASONING_PROMPT_TEMPLATE = """
 You are a step-by-step reasoning agent. Your job is to generate a chain-of-thought rationale for how to answer the user's prompt.
 
-# Instructions
 1. Carefully review the grounded context (if provided) and the user's prompt.
 2. Write a rationale for your reasoning process, but do NOT include any heading like '### Rationale'.
 3. In your rationale, explain:
@@ -71,10 +63,8 @@ You are a step-by-step reasoning agent. Your job is to generate a chain-of-thoug
 5. Do not write the final answer. Only provide the rationale and plan.
 6. Be clear, concise, and explicit about your reasoning process.
 
-# Grounded Context
 {grounded_context}
 
-# User's Prompt
 {prompt}
 
 ---

@@ -1,7 +1,3 @@
-"""
-Memory utilities for memory operations and citation handling.
-"""
-
 import logging
 from mem0 import Memory
 from dotenv import load_dotenv
@@ -10,13 +6,20 @@ load_dotenv()
 
 logger = logging.getLogger("memory")
 
-# Initialize mem0 client
 config = {
     "vector_store": {
         "provider": "chroma",
         "config": {
-            "collection_name": "test",
+            "collection_name": "mem0",
             "path": "db",
+        }
+    },
+    "llm": {
+        "provider": "openai",
+        "config": {
+            "model": "gpt-4o",
+            "temperature": 0.2,
+            "max_tokens": 2000,
         }
     }
 }

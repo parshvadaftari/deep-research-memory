@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from app.services.agent_service import AgentService
+from app.simple_agent.agent_service import AgentService
 import json
 import logging
 
