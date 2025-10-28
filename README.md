@@ -1,151 +1,89 @@
 # Deep Research Memory
 
-An AI-powered research assistant that retrieves context from long-term memory (Mem0) and past conversations to provide grounded, well-structured answers with proper citations.
+An AI-powered research assistant that retrieves context from long-term memory and past conversations to provide grounded, well-structured answers with proper citations.
 
-## Features
+## ✨ Key Features
 
-- **Intelligent Memory Search**: Search through stored research memories with semantic understanding
-- **Real-time Streaming**: Get responses streamed in real-time with WebSocket support
-- **Citation Tracking**: View source citations and references for all responses
-- **Contextual Responses**: AI-powered responses that understand the context of your research
-- **Memory Persistence**: Store and retrieve research memories across sessions
-- **Modern UI**: Clean, responsive interface built with Next.js and Tailwind CSS
+- **Semantic Memory Search** – Find relevant research context instantly
+- **Real-time Streaming** – WebSocket-powered responses as they generate
+- **Smart Citations** – Every response includes source references
+- **Persistent Memory** – Your research stays available across sessions
+- **Modern Interface** – Responsive UI with dark/light mode support
 
-## Technology Stack
+## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 15 with TypeScript and React 19
-- **Backend**: FastAPI (Python 3.11+)
-- **Database**: ChromaDB (vector database) + SQLite (Conversations)
-- **AI Models**: OpenAI GPT-4.1-mini via LangChain
-- **Memory System**: Mem0AI for advanced memory management
-- **UI Components**: Radix UI + Tailwind CSS
-- **Real-time**: WebSocket for streaming responses
+**Frontend**
+- Next.js 15 + TypeScript + React 19
+- Tailwind CSS + Radix UI
 
-## Modular Backend Structure
+**Backend**
+- FastAPI (Python 3.11+)
+- ChromaDB (vectors) + SQLite (conversations)
+- OpenAI GPT-4.1-mini via LangChain
+- Mem0AI for memory management
 
-The backend is organized into modular subfolders for each agent type:
+**Architecture**
+- `simple_agent/` – Basic research agent
+- `sequential_agent/` – LangGraph sequential flow
+- `multiagent/` – LangGraph multi-agent system
 
-- `simple_agent/` – Simple research agent logic and endpoints
-- `sequential_agent/` – LangGraph sequential agent logic and endpoints
-- `multiagent/` – LangGraph multiagent logic and endpoints
+> **Why GPT-4.1-mini?** 15x more cost-effective than GPT-4o, 2x faster streaming, and optimized for research tasks.
 
-
-### Why GPT-4.1-mini?
-
-We chose GPT-4.1-mini for its optimal balance of performance, cost, and speed:
-
-- **Cost**: 15x more affordable than GPT-4o
-- **Speed**: 2x faster for real-time streaming
-- **Research Focus**: Excellent at memory retrieval and citation tasks
-
-Perfect for long research sessions while maintaining high-quality responses.
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-
-- Git
-- Node.js 18+ (for frontend)
-- Python 3.11+ (for backend)
+- Node.js 18+
+- Python 3.11+
 - OpenAI API key
 
-### Installation
+### Setup
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone git@github.com:parshvadaftari/deep-research-memory.git
-
 cd deep-research-memory
 ```
 
-### Environment Setup
-
-#### Backend Variables (.env)
+Create `.env` in backend directory:
 ```plaintext
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-### Running the Application
-
-#### Frontend (Next.js)
+### Frontend
 
 ```bash
-# Navigate to frontend directory
 cd frontend
-
-# Install dependencies
 npm install --legacy-peer-deps
-
-# Start development server
 npm run dev
 ```
 
-The frontend will be available at http://localhost:3000
+Visit http://localhost:3000
 
-#### Backend (FastAPI)
+### Backend
 
 ```bash
-# Navigate to backend directory
 cd backend
-
-# Create virtual environment
 python -m venv .venv
-
-# Activate virtual environment
-source .venv/bin/activate
-
-# Install dependencies
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# Start the development server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Or using the built-in run script:
-```bash
-cd backend
 python main.py
 ```
 
-## Testing
+API available at http://localhost:8000
 
-The project includes a comprehensive test suite covering both **retrieval** and **generation** components of the deep research memory system.
+## 🧪 Testing
 
-### Prerequisites
-
-Install test dependencies:
 ```bash
 cd backend
 pip install -r requirements-test.txt
-```
-
-### Running Tests
-
-#### Basic Test Execution
-```bash
-# Run all tests
-python -m pytest
-
-# Run with verbose output
 python -m pytest -v
-
-# Run specific test file
-python -m pytest tests/test_retrieval.py
 ```
 
-## API Endpoints
+## 📡 API Endpoints
 
-### HTTP Endpoints
-- `GET /` - Root endpoint
-- `POST /api/v1/search` - Search endpoint (streaming response)
+**HTTP**
+- `GET /` – Health check
+- `POST /api/v1/search` – Search with streaming
 
-### WebSocket Endpoints
-- `WS /ws` - WebSocket endpoint for real-time search
-
-### Key Features
-
-- **Real-time Streaming**: WebSocket-based streaming for immediate feedback
-- **Memory Management**: Persistent storage of research memories
-- **Citation System**: Track and display source references
-- **Responsive Design**: Works on desktop and mobile devices
-- **Dark/Light Mode**: Theme switching support
+**WebSocket**
+- `WS /ws` – Real-time search connection
